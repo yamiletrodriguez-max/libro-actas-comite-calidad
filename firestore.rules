@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function estaAutenticado() {
+      return request.auth != null;
+    }
+
+    function esAdmin() {
+      return estaAutenticado() &&
+        get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.rol == 'admin';
+    }
+
+    // Cada usuario puede leer su propio perfil y el de sus compañeros
+    // (para ver nombres/cargos al elegir participantes), pero solo un
+    // admin puede crear o editar perfiles desde el cliente. La creación
+    // normal de cuentas ocurre en la función serverless con el SDK admin.
+    match /usuarios/{uid} {
+      allow read: if estaAutenticado();
+      allow update: if estaAutenticado() && (request.auth.uid == uid || esAdmin())
+                    // un usuario normal solo puede tocar su propia firma, nada más
+                    && (esAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['firmaURL']));
+      allow create, delete: if false; // solo mediante la función serverless con permisos de admin
+    }
+
+    // Las actas las crea/edita el admin. Los participantes (docentes)
+    // solo pueden actualizar el arreglo de participantes (para firmar) y
+    // el estado/pdfURL derivados de esa firma.
+    match /actas/{actaId} {
+      allow read: if estaAutenticado();
+      allow create, delete: if esAdmin();
+      allow update: if esAdmin() ||
+        (estaAutenticado() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participantes', 'estado', 'pdfURL']));
+    }
+  }
+}

@@ -1,0 +1,2 @@
+Coloca aquí tu logo institucional con el nombre exacto: logo.png
+(Recomendado: fondo transparente, cuadrado, al menos 200x200 px).
