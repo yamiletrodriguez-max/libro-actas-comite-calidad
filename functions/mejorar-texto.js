@@ -4,8 +4,10 @@
 // formal, clara y correcta, sin inventar acuerdos ni datos que no estén
 // en el borrador original.
 //
-// Configura la variable de entorno ANTHROPIC_API_KEY en Netlify:
-// Site settings -> Environment variables -> ANTHROPIC_API_KEY
+// Usa Google Gemini (capa gratuita de Google AI Studio, sin tarjeta).
+// Configura la variable de entorno GEMINI_API_KEY en Netlify:
+// Site settings -> Environment variables -> GEMINI_API_KEY
+// Consíguela gratis en https://aistudio.google.com/apikey
 
 exports.handler = async function (event) {
   if (event.httpMethod !== 'POST') {
@@ -31,33 +33,34 @@ encabezados ni firmas, solo el cuerpo mejorado del texto. Responde
       ? `Contexto de la reunión: ${contexto}\n\nTexto a mejorar:\n${texto}`
       : `Texto a mejorar:\n${texto}`;
 
-    const respuesta = await fetch('https://api.anthropic.com/v1/messages', {
+    const modelo = 'gemini-2.0-flash';
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+    const respuesta = await fetch(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
-        max_tokens: 1500,
-        system: promptSistema,
-        messages: [{ role: 'user', content: mensajeUsuario }],
+        systemInstruction: { parts: [{ text: promptSistema }] },
+        contents: [{ role: 'user', parts: [{ text: mensajeUsuario }] }],
+        generationConfig: { maxOutputTokens: 1500 },
       }),
     });
 
     if (!respuesta.ok) {
       const detalle = await respuesta.text();
-      console.error('Error de Anthropic:', detalle);
+      console.error('Error de Gemini:', detalle);
       return { statusCode: 502, body: JSON.stringify({ error: 'Error al mejorar el texto.' }) };
     }
 
     const datos = await respuesta.json();
-    const textoMejorado = datos.content
-      .filter((bloque) => bloque.type === 'text')
-      .map((bloque) => bloque.text)
+    const textoMejorado = (datos.candidates?.[0]?.content?.parts || [])
+      .map((parte) => parte.text || '')
       .join('\n')
       .trim();
+
+    if (!textoMejorado) {
+      return { statusCode: 502, body: JSON.stringify({ error: 'No se recibió texto mejorado.' }) };
+    }
 
     return {
       statusCode: 200,

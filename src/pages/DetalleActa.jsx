@@ -104,6 +104,19 @@ export default function DetalleActa() {
           </>
         )}
 
+        {acta.evidencias && acta.evidencias.length > 0 && (
+          <>
+            <h3>Evidencia fotográfica</h3>
+            <div className="galeria-evidencias galeria-evidencias--vista">
+              {acta.evidencias.map((src, i) => (
+                <div key={i} className="miniatura-evidencia">
+                  <img src={src} alt={`Evidencia ${i + 1} de la reunión`} />
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
         <div className="bloque-firmas">
           {(acta.participantes || []).map((p) => (
             <div key={p.uid} className="firma-cuadro">

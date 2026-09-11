@@ -109,6 +109,36 @@ export async function generarPDFActa(acta, logoURL = '/logo.png') {
     y += 16;
   }
 
+  // --- Evidencia fotográfica ---
+  const evidencias = acta.evidencias || [];
+  if (evidencias.length > 0) {
+    if (y > 640) { doc.addPage(); y = margen; }
+    doc.setFont('times', 'bold');
+    doc.setFontSize(11.5);
+    doc.text('Evidencia fotográfica', margen, y);
+    y += 18;
+
+    const colAnchoEv = (anchoUtil - 12) / 2;
+    const altoEv = 130;
+    let colEv = 0;
+    let filaYEv = y;
+    for (const foto of evidencias) {
+      if (filaYEv + altoEv > 730) { doc.addPage(); filaYEv = margen; colEv = 0; }
+      const xEv = margen + colEv * (colAnchoEv + 12);
+      try {
+        doc.addImage(foto, 'JPEG', xEv, filaYEv, colAnchoEv, altoEv);
+      } catch (e) {
+        // si una foto no carga, se deja el espacio en blanco
+      }
+      colEv++;
+      if (colEv > 1) {
+        colEv = 0;
+        filaYEv += altoEv + 12;
+      }
+    }
+    y = colEv === 0 ? filaYEv + 16 : filaYEv + altoEv + 16;
+  }
+
   // --- Firmas ---
   const participantes = acta.participantes || [];
   const colAncho = anchoUtil / 2;

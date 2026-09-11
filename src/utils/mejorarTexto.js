@@ -1,6 +1,6 @@
 // Llama a la función serverless (Netlify Function) que a su vez llama a la
-// API de Anthropic con la llave guardada de forma segura en el servidor.
-// Nunca coloques tu llave de Anthropic en el código del navegador.
+// API de Google Gemini con la llave guardada de forma segura en el servidor.
+// Nunca coloques tu llave de Gemini en el código del navegador.
 
 export async function mejorarRedaccion(textoBorrador, contexto = '') {
   const respuesta = await fetch('/.netlify/functions/mejorar-texto', {

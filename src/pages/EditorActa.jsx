@@ -4,6 +4,7 @@ import { addDoc, collection, doc, getDoc, serverTimestamp, updateDoc } from 'fir
 import { db } from '../firebase.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import SelectorParticipantes from '../components/SelectorParticipantes.jsx';
+import CapturaEvidencias from '../components/CapturaEvidencias.jsx';
 import { mejorarRedaccion } from '../utils/mejorarTexto.js';
 
 export default function EditorActa() {
@@ -19,6 +20,7 @@ export default function EditorActa() {
   const [desarrollo, setDesarrollo] = useState('');
   const [acuerdos, setAcuerdos] = useState('');
   const [participantes, setParticipantes] = useState([]);
+  const [evidencias, setEvidencias] = useState([]);
 
   const [mejorando, setMejorando] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -37,6 +39,7 @@ export default function EditorActa() {
       setDesarrollo(a.desarrollo || '');
       setAcuerdos(a.acuerdos || '');
       setParticipantes(a.participantes || []);
+      setEvidencias(a.evidencias || []);
     });
   }, [id]);
 
@@ -59,7 +62,7 @@ export default function EditorActa() {
     setError('');
     try {
       const datosActa = {
-        numero, titulo, fecha, lugar, agenda, desarrollo, acuerdos, participantes,
+        numero, titulo, fecha, lugar, agenda, desarrollo, acuerdos, participantes, evidencias,
         estado: 'borrador',
         actualizadoEn: serverTimestamp(),
       };
@@ -90,7 +93,7 @@ export default function EditorActa() {
     setError('');
     try {
       const datosActa = {
-        numero, titulo, fecha, lugar, agenda, desarrollo, acuerdos, participantes,
+        numero, titulo, fecha, lugar, agenda, desarrollo, acuerdos, participantes, evidencias,
         estado: 'pendiente_firmas',
         actualizadoEn: serverTimestamp(),
       };
@@ -161,6 +164,11 @@ export default function EditorActa() {
       <div className="tarjeta">
         <h3>Participantes de la reunión</h3>
         <SelectorParticipantes seleccionados={participantes} alCambiar={setParticipantes} />
+      </div>
+
+      <div className="tarjeta">
+        <h3>Evidencia fotográfica</h3>
+        <CapturaEvidencias evidencias={evidencias} alCambiar={setEvidencias} />
       </div>
 
       <div style={{ display: 'flex', gap: '0.8em' }}>

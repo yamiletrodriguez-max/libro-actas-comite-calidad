@@ -1,5 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signOut,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
+  updatePassword,
+} from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase.js';
 
@@ -33,6 +40,16 @@ export function AuthProvider({ children }) {
     await signOut(auth);
   }
 
+  // Cambia la contraseña del usuario actual. Firebase exige reautenticar
+  // primero con la contraseña actual antes de permitir el cambio, por
+  // seguridad (si la sesión lleva tiempo abierta, no basta con estar logueado).
+  async function cambiarClave(claveActual, claveNueva) {
+    if (!usuario || !usuario.email) throw new Error('No hay sesión activa.');
+    const credencial = EmailAuthProvider.credential(usuario.email, claveActual);
+    await reauthenticateWithCredential(usuario, credencial);
+    await updatePassword(usuario, claveNueva);
+  }
+
   // Vuelve a leer el perfil (por ejemplo tras subir una firma por primera vez)
   async function recargarPerfil() {
     if (!usuario) return;
@@ -43,7 +60,7 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ usuario, perfil, cargando, iniciarSesion, cerrarSesion, recargarPerfil }}
+      value={{ usuario, perfil, cargando, iniciarSesion, cerrarSesion, recargarPerfil, cambiarClave }}
     >
       {children}
     </AuthContext.Provider>

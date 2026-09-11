@@ -93,7 +93,7 @@ npm run dev
    - `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`,
      `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`,
      `VITE_FIREBASE_SENDER_ID`, `VITE_FIREBASE_APP_ID` (del paso 1.4)
-   - `ANTHROPIC_API_KEY`: tu llave de https://console.anthropic.com
+   - `GEMINI_API_KEY`: tu llave gratuita de https://aistudio.google.com/apikey
      (para la mejora de redacción con IA)
    - `FIREBASE_SERVICE_ACCOUNT_JSON`: el contenido completo del archivo
      `.json` del paso 1.5, pegado como una sola línea
