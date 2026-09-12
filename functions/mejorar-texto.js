@@ -47,7 +47,7 @@ Reglas estrictas, sin excepción:
       ? `Contexto de la reunión: ${contexto}\n\nTexto a mejorar:\n${texto}`
       : `Texto a mejorar:\n${texto}`;
 
-    const modelo = 'gemini-2.0-flash';
+    const modelo = 'gemini-3.1-flash-lite';
     const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${process.env.GEMINI_API_KEY}`;
 
     const respuesta = await fetch(url, {

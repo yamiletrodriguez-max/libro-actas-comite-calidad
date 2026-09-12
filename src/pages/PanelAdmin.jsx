@@ -11,6 +11,7 @@ const ETIQUETA = {
 };
 
 export default function PanelAdmin() {
+  const { perfil } = useAuth();
   const [actas, setActas] = useState([]);
   const [pestana, setPestana] = useState('actas');
   const [borrandoId, setBorrandoId] = useState(null);
@@ -28,6 +29,12 @@ export default function PanelAdmin() {
   const pendientes = actas.filter((a) => a.estado === 'pendiente_firmas').length;
   const completas = actas.filter((a) => a.estado === 'completa').length;
   const borradores = actas.filter((a) => a.estado === 'borrador').length;
+
+  const pendientesDeMiFirma = actas.filter(
+    (a) =>
+      a.estado === 'pendiente_firmas' &&
+      (a.participantes || []).some((p) => p.uid === perfil.id && !p.firmado)
+  );
 
   async function borrarActa(e, acta) {
     // Evita que el clic active el <Link> que abre el acta.
@@ -76,6 +83,26 @@ export default function PanelAdmin() {
           <button className="btn-oro">+ Nueva acta</button>
         </Link>
       </div>
+
+      {pendientesDeMiFirma.length > 0 && (
+        <div className="tarjeta" style={{ borderColor: 'var(--oro-400)' }}>
+          <h3>Pendientes de tu firma</h3>
+          <div className="lista-actas">
+            {pendientesDeMiFirma.map((a) => (
+              <Link key={a.id} to={`/acta/${a.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <div className="fila-acta">
+                  <div className="num">{a.numero}</div>
+                  <div className="info">
+                    <h4>{a.titulo}</h4>
+                    <p>{a.fecha} · {a.lugar}</p>
+                  </div>
+                  <span className="etiqueta pendiente">Requiere tu firma</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="pestanas">
         <button className={pestana === 'actas' ? 'activa' : ''} onClick={() => setPestana('actas')}>
