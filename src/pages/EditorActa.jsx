@@ -27,7 +27,17 @@ export default function EditorActa() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      // Acta nueva: pre-seleccionamos a quien la está creando como
+      // participante, para que no se le olvide marcarse a sí misma/o
+      // y luego no le aparezca el área para firmar.
+      if (perfil && perfil.rol === 'admin') {
+        setParticipantes([
+          { uid: perfil.id, nombre: perfil.nombre, cargo: perfil.cargo || '', firmado: false, firmaURL: null, fechaFirma: null },
+        ]);
+      }
+      return;
+    }
     getDoc(doc(db, 'actas', id)).then((snap) => {
       if (!snap.exists()) return;
       const a = snap.data();
@@ -41,7 +51,7 @@ export default function EditorActa() {
       setParticipantes(a.participantes || []);
       setEvidencias(a.evidencias || []);
     });
-  }, [id]);
+  }, [id, perfil]);
 
   async function mejorarConIA() {
     if (!desarrollo.trim()) return;

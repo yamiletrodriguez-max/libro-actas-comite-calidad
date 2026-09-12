@@ -14,6 +14,8 @@ export default function DetalleActa() {
   const [pidiendoFirma, setPidiendoFirma] = useState(false);
   const [error, setError] = useState('');
   const [generandoPDF, setGenerandoPDF] = useState(false);
+  const [agregandoParticipante, setAgregandoParticipante] = useState(false);
+  const [conforme, setConforme] = useState(false);
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, 'actas', id), (snap) => {
@@ -27,8 +29,35 @@ export default function DetalleActa() {
   const miParticipacion = (acta.participantes || []).find((p) => p.uid === perfil.id);
   const todosFirmaron = (acta.participantes || []).length > 0 && acta.participantes.every((p) => p.firmado);
 
+  // Permite que la administradora (u otro admin) se agregue como
+  // firmante en un acta ya publicada, por si no quedó marcada como
+  // participante al momento de crearla. No modifica el resto del acta.
+  async function agregarmeComoFirmante() {
+    if (!perfil || perfil.rol !== 'admin' || miParticipacion) return;
+    setAgregandoParticipante(true);
+    setError('');
+    try {
+      const nuevoParticipante = {
+        uid: perfil.id,
+        nombre: perfil.nombre,
+        cargo: perfil.cargo || '',
+        firmado: false,
+        firmaURL: null,
+        fechaFirma: null,
+      };
+      await updateDoc(doc(db, 'actas', id), {
+        participantes: [...(acta.participantes || []), nuevoParticipante],
+      });
+    } catch (e) {
+      setError('No se pudo agregarte como firmante. Intenta de nuevo.');
+    } finally {
+      setAgregandoParticipante(false);
+    }
+  }
+
   async function firmarActa() {
     if (!miParticipacion) return;
+    if (!conforme) return;
     if (!perfil.firmaURL) {
       setPidiendoFirma(true);
       return;
@@ -135,6 +164,18 @@ export default function DetalleActa() {
 
       {error && <div className="mensaje-error">{error}</div>}
 
+      {!miParticipacion && perfil.rol === 'admin' && acta.estado === 'pendiente_firmas' && (
+        <div className="tarjeta" style={{ borderColor: 'var(--oro-400)' }}>
+          <h3>No apareces como firmante en esta acta</h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--tinta-suave)' }}>
+            Si participaste en esta reunión y también debes firmar, agrégate como firmante.
+          </p>
+          <button className="btn-oro" onClick={agregarmeComoFirmante} disabled={agregandoParticipante}>
+            {agregandoParticipante ? 'Agregando…' : '+ Agregarme como firmante'}
+          </button>
+        </div>
+      )}
+
       {miParticipacion && !miParticipacion.firmado && acta.estado === 'pendiente_firmas' && (
         <div className="tarjeta">
           <h3>Tu firma</h3>
@@ -148,13 +189,35 @@ export default function DetalleActa() {
             </>
           ) : (
             <>
-              <p style={{ fontSize: '0.85rem', color: 'var(--tinta-suave)' }}>
-                Al aceptar, confirmas que participaste en esta reunión y que tu firma digital
-                guardada se incluirá automáticamente en el acta.
-              </p>
               <img src={perfil.firmaURL} alt="Tu firma guardada" style={{ height: 50, marginBottom: '0.8em' }} />
+              <label
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.6em',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  marginBottom: '0.9em',
+                  padding: '0.7em',
+                  border: '1px solid var(--oro-400)',
+                  borderRadius: '8px',
+                  background: 'rgba(212, 168, 83, 0.08)',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={conforme}
+                  onChange={(e) => setConforme(e.target.checked)}
+                  style={{ width: 'auto', marginTop: '0.2em' }}
+                />
+                <span>
+                  Declaro que participé en esta reunión y que estoy de acuerdo con lo establecido
+                  en esta acta (desarrollo, acuerdos y compromisos descritos arriba). Al firmar,
+                  mi firma digital guardada se incluirá automáticamente en el documento.
+                </span>
+              </label>
               <div style={{ display: 'flex', gap: '0.8em' }}>
-                <button className="btn-oro" onClick={firmarActa} disabled={firmando}>
+                <button className="btn-oro" onClick={firmarActa} disabled={firmando || !conforme}>
                   {firmando ? 'Registrando…' : 'Aceptar y firmar'}
                 </button>
                 <button className="btn-outline" onClick={() => setPidiendoFirma(true)}>
