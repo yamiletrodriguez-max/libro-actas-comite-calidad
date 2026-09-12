@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '../firebase.js';
 import { useAuth } from '../context/AuthContext.jsx';
 
@@ -13,6 +13,8 @@ const ETIQUETA = {
 export default function PanelAdmin() {
   const [actas, setActas] = useState([]);
   const [pestana, setPestana] = useState('actas');
+  const [borrandoId, setBorrandoId] = useState(null);
+  const [errorBorrar, setErrorBorrar] = useState('');
 
   useEffect(() => {
     const q = query(collection(db, 'actas'), orderBy('creadoEn', 'desc'));
@@ -22,9 +24,59 @@ export default function PanelAdmin() {
     return unsub;
   }, []);
 
+  const totalActas = actas.length;
+  const pendientes = actas.filter((a) => a.estado === 'pendiente_firmas').length;
+  const completas = actas.filter((a) => a.estado === 'completa').length;
+  const borradores = actas.filter((a) => a.estado === 'borrador').length;
+
+  async function borrarActa(e, acta) {
+    // Evita que el clic active el <Link> que abre el acta.
+    e.preventDefault();
+    e.stopPropagation();
+    const confirmado = window.confirm(
+      `¿Borrar el acta No. ${acta.numero} — "${acta.titulo}"? Esta acción no se puede deshacer.`
+    );
+    if (!confirmado) return;
+    setErrorBorrar('');
+    setBorrandoId(acta.id);
+    try {
+      await deleteDoc(doc(db, 'actas', acta.id));
+    } catch (err) {
+      setErrorBorrar('No se pudo borrar el acta. Intenta de nuevo.');
+    } finally {
+      setBorrandoId(null);
+    }
+  }
+
   return (
     <div>
       <h1>Libro de Actas — Comité de Calidad</h1>
+
+      <div className="stats-grid">
+        <div className="stat-card">
+          <span className="stat-numero">{totalActas}</span>
+          <span className="stat-etiqueta">Actas totales</span>
+        </div>
+        <div className="stat-card stat-card--oro">
+          <span className="stat-numero">{pendientes}</span>
+          <span className="stat-etiqueta">Pendientes de firma</span>
+        </div>
+        <div className="stat-card stat-card--verde">
+          <span className="stat-numero">{completas}</span>
+          <span className="stat-etiqueta">Completas</span>
+        </div>
+        <div className="stat-card">
+          <span className="stat-numero">{borradores}</span>
+          <span className="stat-etiqueta">Borradores</span>
+        </div>
+      </div>
+
+      <div className="accesos-rapidos">
+        <Link to="/admin/nueva-acta">
+          <button className="btn-oro">+ Nueva acta</button>
+        </Link>
+      </div>
+
       <div className="pestanas">
         <button className={pestana === 'actas' ? 'activa' : ''} onClick={() => setPestana('actas')}>
           Actas
@@ -36,15 +88,14 @@ export default function PanelAdmin() {
 
       {pestana === 'actas' && (
         <>
-          <div style={{ marginBottom: '1.2em' }}>
-            <Link to="/admin/nueva-acta">
-              <button className="btn-oro">+ Nueva acta</button>
-            </Link>
-          </div>
+          {errorBorrar && <div className="mensaje-error">{errorBorrar}</div>}
           <div className="lista-actas">
             {actas.map((a) => (
-              <Link key={a.id} to={a.estado === 'borrador' ? `/admin/acta/${a.id}/editar` : `/acta/${a.id}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                <div className="fila-acta">
+              <div key={a.id} className="fila-acta">
+                <Link
+                  to={a.estado === 'borrador' ? `/admin/acta/${a.id}/editar` : `/acta/${a.id}`}
+                  style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '1em', flex: 1, minWidth: 0 }}
+                >
                   <div className="num">{a.numero}</div>
                   <div className="info">
                     <h4>{a.titulo}</h4>
@@ -53,8 +104,17 @@ export default function PanelAdmin() {
                   <span className={`etiqueta ${ETIQUETA[a.estado]?.clase}`}>
                     {ETIQUETA[a.estado]?.texto}
                   </span>
-                </div>
-              </Link>
+                </Link>
+                <button
+                  type="button"
+                  className="btn-danger btn-borrar-acta"
+                  onClick={(e) => borrarActa(e, a)}
+                  disabled={borrandoId === a.id}
+                  title="Borrar esta acta"
+                >
+                  {borrandoId === a.id ? 'Borrando…' : 'Borrar'}
+                </button>
+              </div>
             ))}
             {actas.length === 0 && (
               <p style={{ color: 'var(--tinta-suave)' }}>Todavía no se ha registrado ninguna acta.</p>

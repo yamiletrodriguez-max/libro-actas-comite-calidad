@@ -153,7 +153,7 @@ export default function EditorActa() {
           <button type="button" className="btn-outline" onClick={mejorarConIA} disabled={mejorando || !desarrollo.trim()} style={{ marginTop: '0.5em' }}>
             {mejorando ? 'Mejorando redacción…' : '✎ Mejorar redacción con IA'}
           </button>
-          <p className="ayuda-ia">La IA solo mejora la forma del texto; no inventa acuerdos ni datos nuevos. Revisa siempre el resultado.</p>
+          <p className="ayuda-ia">La IA desarrolla y extiende lo que ya escribiste con un tono formal; nunca inventa acuerdos, nombres, fechas ni datos nuevos. Revisa siempre el resultado.</p>
         </div>
         <div className="campo">
           <label>Acuerdos y compromisos</label>
