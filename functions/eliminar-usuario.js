@@ -51,6 +51,9 @@ exports.handler = async function (event) {
     return { statusCode: 200, body: JSON.stringify({ ok: true }) };
   } catch (err) {
     console.error(err);
-    return { statusCode: 500, body: JSON.stringify({ error: 'No se pudo eliminar el usuario.' }) };
+    // DEBUG TEMPORAL: se incluye el error técnico real (err.code / err.message)
+    // para poder diagnosticar sin tener que entrar a los logs de Netlify.
+    // Quitar el campo "detalle" una vez resuelto el problema.
+    return { statusCode: 500, body: JSON.stringify({ error: 'No se pudo eliminar el usuario.', detalle: `${err.code || ''} ${err.message || err}`.trim() }) };
   }
 };

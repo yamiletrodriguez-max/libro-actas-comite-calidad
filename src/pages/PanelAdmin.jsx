@@ -327,7 +327,7 @@ function ListaUsuarios() {
         body: JSON.stringify({ uid, nombre, cargo, email }),
       });
       const datos = await resp.json();
-      if (!resp.ok) throw new Error(datos.error || 'No se pudieron guardar los cambios.');
+      if (!resp.ok) throw new Error(datos.detalle ? `${datos.error} (${datos.detalle})` : (datos.error || 'No se pudieron guardar los cambios.'));
       setEditandoId(null);
       setMensaje('Datos actualizados correctamente.');
     } catch (err) {
@@ -357,7 +357,7 @@ function ListaUsuarios() {
         body: JSON.stringify({ uid: u.id }),
       });
       const datos = await resp.json();
-      if (!resp.ok) throw new Error(datos.error || 'No se pudo eliminar el usuario.');
+      if (!resp.ok) throw new Error(datos.detalle ? `${datos.error} (${datos.detalle})` : (datos.error || 'No se pudo eliminar el usuario.'));
       setMensaje(`Cuenta de "${u.nombre || u.email}" eliminada.`);
     } catch (err) {
       setError(err.message);

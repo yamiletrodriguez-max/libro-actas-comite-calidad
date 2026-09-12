@@ -32,7 +32,7 @@ export default function MiPerfil() {
         body: JSON.stringify({ uid: perfil.id, nombre, cargo, email }),
       });
       const datos = await resp.json();
-      if (!resp.ok) throw new Error(datos.error || 'No se pudieron guardar los cambios.');
+      if (!resp.ok) throw new Error(datos.detalle ? `${datos.error} (${datos.detalle})` : (datos.error || 'No se pudieron guardar los cambios.'));
       await recargarPerfil();
       setEditandoDatos(false);
       setOkDatos(
