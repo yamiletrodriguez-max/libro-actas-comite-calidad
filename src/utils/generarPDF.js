@@ -22,11 +22,39 @@ async function urlABase64(url) {
  * @param {string} logoURL - URL pública del logo institucional (ej. /logo.png)
  * @returns {Blob} PDF listo para subir a Storage o descargar
  */
-export async function generarPDFActa(acta, logoURL = '/logo.png') {
+export async function generarPDFActa(acta, logoURL = '/logo.png', pieURL = '/pie-acta.jpg') {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' });
   const margen = 56;
   let y = margen;
-  const anchoUtil = doc.internal.pageSize.getWidth() - margen * 2;
+  const anchoPagina = doc.internal.pageSize.getWidth();
+  const altoPagina = doc.internal.pageSize.getHeight();
+  const anchoUtil = anchoPagina - margen * 2;
+
+  // Banda decorativa institucional para el pie de cada página (azul y
+  // dorado, tomada del arte institucional). Si no carga, el PDF se genera
+  // igual sin bloquear nada.
+  let pieB64 = null;
+  try {
+    pieB64 = await urlABase64(pieURL);
+  } catch (e) {
+    // sin pie decorativo si no está disponible
+  }
+
+  function dibujarPie(numeroPagina) {
+    if (!pieB64) return;
+    const altoBanda = 26;
+    try {
+      doc.addImage(pieB64, 'JPEG', 0, altoPagina - altoBanda, anchoPagina, altoBanda);
+    } catch (e) {
+      return;
+    }
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(255, 255, 255);
+    doc.text('Politécnico y Centro Educativo Padre Luis Variara · Comité de Calidad', margen, altoPagina - 10);
+    doc.text(`Página ${numeroPagina}`, anchoPagina - margen, altoPagina - 10, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+  }
 
   // --- Encabezado con logo ---
   try {
@@ -182,6 +210,13 @@ export async function generarPDFActa(acta, logoURL = '/logo.png') {
       filaInicioY += 100;
       y = filaInicioY;
     }
+  }
+
+  // --- Pie institucional en todas las páginas ---
+  const totalPaginas = doc.internal.getNumberOfPages();
+  for (let i = 1; i <= totalPaginas; i++) {
+    doc.setPage(i);
+    dibujarPie(i);
   }
 
   return doc.output('blob');

@@ -200,8 +200,24 @@ label { display: block; font-size: 0.82rem; color: var(--tinta-suave); margin-bo
 .acta-vista .firma-cuadro img { height: 55px; object-fit: contain; }
 .acta-vista .firma-cuadro .linea { border-top: 1px solid var(--tinta); margin-top: 0.3em; padding-top: 0.3em; font-family: var(--sans); font-size: 0.82rem; }
 
-.login-caja { max-width: 380px; margin: 4.5em auto; }
-.login-caja .logo-login { display: block; height: 84px; margin: 0 auto 1em; }
+.login-fondo {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2em 1.2em;
+  background: linear-gradient(180deg, rgba(11,20,64,0.55), rgba(11,20,64,0.72)), url('/fondo-institucional.jpg');
+  background-size: cover;
+  background-position: center;
+}
+
+.login-caja { max-width: 380px; width: 100%; margin: 0; }
+.login-caja .logo-login { display: block; height: 84px; margin: 0 auto 1em; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35)); }
+.login-caja h2, .login-caja > p { color: #fff; }
+.login-caja .tarjeta { background: var(--papel-alto); border-radius: var(--radius); box-shadow: 0 12px 32px rgba(11,20,64,0.35); }
+.login-caja > p:last-child { color: var(--celeste-100); }
 
 .mensaje-error { background: var(--rojo-alerta-bg); color: var(--rojo-alerta); padding: 0.75em 1em; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1em; }
 .mensaje-ok { background: var(--verde-ok-bg); color: var(--verde-ok); padding: 0.75em 1em; border-radius: var(--radius-sm); font-size: 0.85rem; margin-bottom: 1em; }

@@ -22,42 +22,44 @@ export default function Login() {
   }
 
   return (
-    <div className="login-caja">
-      <img src="/logo.png" alt="Logo" className="logo-login" />
-      <h2 style={{ textAlign: 'center' }}>Libro de Actas Digital</h2>
-      <p style={{ textAlign: 'center', color: 'var(--tinta-suave)', marginTop: 0 }}>
-        Comité de Calidad · Politécnico Padre Luis Variara
-      </p>
-      <div className="tarjeta">
-        {error && <div className="mensaje-error">{error}</div>}
-        <form onSubmit={manejarEnvio}>
-          <div className="campo">
-            <label>Correo institucional</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nombre@variara.edu.do"
-            />
-          </div>
-          <div className="campo">
-            <label>Contraseña</label>
-            <input
-              type="password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-          <button className="btn-primary" type="submit" disabled={enviando} style={{ width: '100%' }}>
-            {enviando ? 'Entrando…' : 'Entrar'}
-          </button>
-        </form>
+    <div className="login-fondo">
+      <div className="login-caja">
+        <img src="/logo.png" alt="Logo" className="logo-login" />
+        <h2 style={{ textAlign: 'center' }}>Libro de Actas Digital</h2>
+        <p style={{ textAlign: 'center', marginTop: 0, opacity: 0.9 }}>
+          Comité de Calidad · Politécnico Padre Luis Variara
+        </p>
+        <div className="tarjeta">
+          {error && <div className="mensaje-error">{error}</div>}
+          <form onSubmit={manejarEnvio}>
+            <div className="campo">
+              <label>Correo institucional</label>
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nombre@variara.edu.do"
+              />
+            </div>
+            <div className="campo">
+              <label>Contraseña</label>
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            <button className="btn-primary" type="submit" disabled={enviando} style={{ width: '100%' }}>
+              {enviando ? 'Entrando…' : 'Entrar'}
+            </button>
+          </form>
+        </div>
+        <p style={{ fontSize: '0.8rem', textAlign: 'center' }}>
+          ¿No tienes cuenta? Solicítala a la administración del Comité de Calidad.
+        </p>
       </div>
-      <p style={{ fontSize: '0.8rem', color: 'var(--tinta-suave)', textAlign: 'center' }}>
-        ¿No tienes cuenta? Solicítala a la administración del Comité de Calidad.
-      </p>
     </div>
   );
 }
