@@ -88,7 +88,7 @@ export default function EditorActa() {
         navegar('/admin');
       }
     } catch (e) {
-      setError('No se pudo guardar el acta.');
+      setError(`No se pudo guardar el acta (${e.code || e.message || e}).`);
     } finally {
       setGuardando(false);
     }
@@ -118,7 +118,7 @@ export default function EditorActa() {
       }
       navegar('/admin');
     } catch (e) {
-      setError('No se pudo publicar el acta para firmas.');
+      setError(`No se pudo publicar el acta para firmas (${e.code || e.message || e}).`);
     } finally {
       setGuardando(false);
     }

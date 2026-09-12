@@ -69,7 +69,7 @@ export default function CapturaFirma({ alTerminar }) {
       await recargarPerfil();
       if (alTerminar) alTerminar(firmaBase64);
     } catch (e) {
-      setError('No se pudo guardar la firma. Intenta con otra foto.');
+      setError(`No se pudo guardar la firma (${e.code || e.message || e}). Intenta con otra foto.`);
     } finally {
       setSubiendo(false);
     }

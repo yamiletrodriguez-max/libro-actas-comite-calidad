@@ -36,6 +36,10 @@ export default function PanelAdmin() {
       (a.participantes || []).some((p) => p.uid === perfil.id && !p.firmado)
   );
 
+  // Todas las actas que todavía esperan la firma de alguien (de todo el
+  // comité, no solo de quien está viendo el panel).
+  const todasLasPendientes = actas.filter((a) => a.estado === 'pendiente_firmas');
+
   async function borrarActa(e, acta) {
     // Evita que el clic active el <Link> que abre el acta.
     e.preventDefault();
@@ -108,6 +112,9 @@ export default function PanelAdmin() {
         <button className={pestana === 'actas' ? 'activa' : ''} onClick={() => setPestana('actas')}>
           Actas
         </button>
+        <button className={pestana === 'firmas' ? 'activa' : ''} onClick={() => setPestana('firmas')}>
+          Firmas pendientes {todasLasPendientes.length > 0 && `(${todasLasPendientes.length})`}
+        </button>
         <button className={pestana === 'usuarios' ? 'activa' : ''} onClick={() => setPestana('usuarios')}>
           Gestionar usuarios
         </button>
@@ -148,6 +155,45 @@ export default function PanelAdmin() {
             )}
           </div>
         </>
+      )}
+
+      {pestana === 'firmas' && (
+        <div className="lista-actas">
+          {todasLasPendientes.map((a) => {
+            const faltantes = (a.participantes || []).filter((p) => !p.firmado);
+            const yaFirmaron = (a.participantes || []).filter((p) => p.firmado);
+            const meFaltaAmi = faltantes.some((p) => p.uid === perfil.id);
+            return (
+              <div key={a.id} className="tarjeta" style={{ marginBottom: '0.8em' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1em' }}>
+                  <div>
+                    <h4 style={{ margin: 0 }}>Acta {a.numero} — {a.titulo}</h4>
+                    <p style={{ margin: '0.2em 0', color: 'var(--tinta-suave)' }}>{a.fecha} · {a.lugar}</p>
+                  </div>
+                  <Link to={`/acta/${a.id}`}>
+                    <button className={meFaltaAmi ? 'btn-oro' : 'btn-outline'}>
+                      {meFaltaAmi ? 'Firmar' : 'Ver acta'}
+                    </button>
+                  </Link>
+                </div>
+                <p style={{ marginTop: '0.6em', marginBottom: '0.3em' }}>
+                  <strong>Falta la firma de:</strong>{' '}
+                  {faltantes.length > 0
+                    ? faltantes.map((p) => p.nombre).join(', ')
+                    : 'nadie (a punto de completarse)'}
+                </p>
+                {yaFirmaron.length > 0 && (
+                  <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--tinta-suave)' }}>
+                    Ya firmaron: {yaFirmaron.map((p) => p.nombre).join(', ')}
+                  </p>
+                )}
+              </div>
+            );
+          })}
+          {todasLasPendientes.length === 0 && (
+            <p style={{ color: 'var(--tinta-suave)' }}>No hay actas pendientes de firma en este momento.</p>
+          )}
+        </div>
       )}
 
       {pestana === 'usuarios' && <GestionUsuarios />}

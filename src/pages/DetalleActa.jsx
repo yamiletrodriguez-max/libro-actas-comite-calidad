@@ -49,7 +49,7 @@ export default function DetalleActa() {
         participantes: [...(acta.participantes || []), nuevoParticipante],
       });
     } catch (e) {
-      setError('No se pudo agregarte como firmante. Intenta de nuevo.');
+      setError(`No se pudo agregarte como firmante (${e.code || e.message || e}).`);
     } finally {
       setAgregandoParticipante(false);
     }
@@ -76,7 +76,7 @@ export default function DetalleActa() {
         estado: yaCompleta ? 'completa' : 'pendiente_firmas',
       });
     } catch (e) {
-      setError('No se pudo registrar tu firma. Intenta de nuevo.');
+      setError(`No se pudo registrar tu firma (${e.code || e.message || e}).`);
     } finally {
       setFirmando(false);
     }
