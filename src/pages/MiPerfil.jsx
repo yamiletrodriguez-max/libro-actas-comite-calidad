@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../firebase.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import CapturaFirma from '../components/CapturaFirma.jsx';
 
@@ -11,23 +9,39 @@ export default function MiPerfil() {
   const [editandoDatos, setEditandoDatos] = useState(false);
   const [nombre, setNombre] = useState(perfil.nombre || '');
   const [cargo, setCargo] = useState(perfil.cargo || '');
+  const [email, setEmail] = useState(usuario?.email || '');
   const [guardandoDatos, setGuardandoDatos] = useState(false);
   const [errorDatos, setErrorDatos] = useState('');
+  const [okDatos, setOkDatos] = useState('');
 
   async function guardarDatos(e) {
     e.preventDefault();
     setErrorDatos('');
+    setOkDatos('');
     if (!nombre.trim()) {
       setErrorDatos('El nombre no puede quedar vacío.');
       return;
     }
     setGuardandoDatos(true);
     try {
-      await updateDoc(doc(db, 'usuarios', perfil.id), { nombre: nombre.trim(), cargo: cargo.trim() });
+      const token = await usuario.getIdToken();
+      const correoCambio = email.trim() !== (usuario?.email || '');
+      const resp = await fetch('/.netlify/functions/actualizar-usuario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ uid: perfil.id, nombre, cargo, email }),
+      });
+      const datos = await resp.json();
+      if (!resp.ok) throw new Error(datos.error || 'No se pudieron guardar los cambios.');
       await recargarPerfil();
       setEditandoDatos(false);
+      setOkDatos(
+        correoCambio
+          ? 'Datos actualizados. Como cambiaste tu correo, la próxima vez inicia sesión con el nuevo.'
+          : 'Datos actualizados correctamente.'
+      );
     } catch (err) {
-      setErrorDatos(`No se pudieron guardar los datos (${err.code || err.message || err}).`);
+      setErrorDatos(err.message);
     } finally {
       setGuardandoDatos(false);
     }
@@ -78,6 +92,7 @@ export default function MiPerfil() {
     <div>
       <h1>Mi perfil y configuración</h1>
       <div className="tarjeta" style={{ maxWidth: 480 }}>
+        {okDatos && <div className="mensaje-ok">{okDatos}</div>}
         {!editandoDatos ? (
           <>
             <p><strong>Nombre:</strong> {perfil.nombre || <span style={{ color: 'var(--tinta-suave)' }}>(sin nombre guardado — complétalo)</span>}</p>
@@ -85,7 +100,7 @@ export default function MiPerfil() {
             <p><strong>Rol:</strong> {perfil.rol === 'admin' ? 'Administración' : 'Docente / integrante'}</p>
             {perfil.cargo && <p><strong>Cargo:</strong> {perfil.cargo}</p>}
             <button className="btn-outline" onClick={() => setEditandoDatos(true)} style={{ marginTop: '0.5em' }}>
-              Editar mi nombre / cargo
+              Editar mi nombre, cargo o correo
             </button>
           </>
         ) : (
@@ -98,6 +113,11 @@ export default function MiPerfil() {
               <label>Cargo (opcional)</label>
               <input value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ej. Coordinadora académica" />
             </div>
+            <div className="campo">
+              <label>Correo</label>
+              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              <p className="ayuda-ia">Si cambias tu correo, la próxima vez debes iniciar sesión con el nuevo.</p>
+            </div>
             {errorDatos && <div className="mensaje-error">{errorDatos}</div>}
             <div style={{ display: 'flex', gap: '0.6em' }}>
               <button className="btn-primary" type="submit" disabled={guardandoDatos}>
@@ -106,7 +126,7 @@ export default function MiPerfil() {
               <button
                 type="button"
                 className="btn-outline"
-                onClick={() => { setEditandoDatos(false); setNombre(perfil.nombre || ''); setCargo(perfil.cargo || ''); }}
+                onClick={() => { setEditandoDatos(false); setNombre(perfil.nombre || ''); setCargo(perfil.cargo || ''); setEmail(usuario?.email || ''); }}
               >
                 Cancelar
               </button>

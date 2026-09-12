@@ -196,7 +196,12 @@ export default function PanelAdmin() {
         </div>
       )}
 
-      {pestana === 'usuarios' && <GestionUsuarios />}
+      {pestana === 'usuarios' && (
+        <>
+          <GestionUsuarios />
+          <ListaUsuarios />
+        </>
+      )}
     </div>
   );
 }
@@ -270,6 +275,159 @@ function GestionUsuarios() {
           {enviando ? 'Creando…' : 'Crear cuenta'}
         </button>
       </form>
+    </div>
+  );
+}
+
+function ListaUsuarios() {
+  const { usuario, perfil: miPerfil } = useAuth();
+  const [usuarios, setUsuarios] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [editandoId, setEditandoId] = useState(null);
+  const [nombre, setNombre] = useState('');
+  const [cargo, setCargo] = useState('');
+  const [email, setEmail] = useState('');
+  const [guardando, setGuardando] = useState(false);
+  const [borrandoId, setBorrandoId] = useState(null);
+  const [error, setError] = useState('');
+  const [mensaje, setMensaje] = useState('');
+
+  useEffect(() => {
+    const q = query(collection(db, 'usuarios'), orderBy('nombre'));
+    const unsub = onSnapshot(q, (snap) => {
+      setUsuarios(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      setCargando(false);
+    });
+    return unsub;
+  }, []);
+
+  function empezarEdicion(u) {
+    setError('');
+    setMensaje('');
+    setEditandoId(u.id);
+    setNombre(u.nombre || '');
+    setCargo(u.cargo || '');
+    setEmail(u.email || '');
+  }
+
+  async function guardarEdicion(e, uid) {
+    e.preventDefault();
+    setError('');
+    setMensaje('');
+    if (!nombre.trim()) {
+      setError('El nombre no puede quedar vacío.');
+      return;
+    }
+    setGuardando(true);
+    try {
+      const token = await usuario.getIdToken();
+      const resp = await fetch('/.netlify/functions/actualizar-usuario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ uid, nombre, cargo, email }),
+      });
+      const datos = await resp.json();
+      if (!resp.ok) throw new Error(datos.error || 'No se pudieron guardar los cambios.');
+      setEditandoId(null);
+      setMensaje('Datos actualizados correctamente.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function eliminarUsuario(u) {
+    if (u.id === miPerfil.id) {
+      setError('No puedes eliminar tu propia cuenta desde aquí.');
+      return;
+    }
+    const confirmado = window.confirm(
+      `¿Eliminar la cuenta de "${u.nombre || u.email}"? Esta acción no se puede deshacer. Las actas donde ya firmó conservarán su firma como registro histórico.`
+    );
+    if (!confirmado) return;
+    setError('');
+    setMensaje('');
+    setBorrandoId(u.id);
+    try {
+      const token = await usuario.getIdToken();
+      const resp = await fetch('/.netlify/functions/eliminar-usuario', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ uid: u.id }),
+      });
+      const datos = await resp.json();
+      if (!resp.ok) throw new Error(datos.error || 'No se pudo eliminar el usuario.');
+      setMensaje(`Cuenta de "${u.nombre || u.email}" eliminada.`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBorrandoId(null);
+    }
+  }
+
+  if (cargando) return <p>Cargando integrantes…</p>;
+
+  return (
+    <div className="tarjeta" style={{ maxWidth: 640, marginTop: '1em' }}>
+      <h3>Integrantes del comité</h3>
+      {error && <div className="mensaje-error">{error}</div>}
+      {mensaje && <div className="mensaje-ok">{mensaje}</div>}
+      <div className="lista-actas">
+        {usuarios.map((u) => (
+          <div key={u.id} className="fila-acta" style={{ display: 'block' }}>
+            {editandoId === u.id ? (
+              <form onSubmit={(e) => guardarEdicion(e, u.id)}>
+                <div className="campo">
+                  <label>Nombre completo</label>
+                  <input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+                </div>
+                <div className="campo">
+                  <label>Cargo (opcional)</label>
+                  <input value={cargo} onChange={(e) => setCargo(e.target.value)} />
+                </div>
+                <div className="campo">
+                  <label>Correo</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                </div>
+                <div style={{ display: 'flex', gap: '0.6em' }}>
+                  <button className="btn-primary" type="submit" disabled={guardando}>
+                    {guardando ? 'Guardando…' : 'Guardar'}
+                  </button>
+                  <button type="button" className="btn-outline" onClick={() => setEditandoId(null)}>
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1em' }}>
+                <div>
+                  <strong>{u.nombre || '(sin nombre)'}</strong>{' '}
+                  <span style={{ fontSize: '0.78rem', color: 'var(--tinta-suave)' }}>
+                    {u.rol === 'admin' ? 'Administración' : 'Docente'}{u.cargo ? ` · ${u.cargo}` : ''}
+                  </span>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--tinta-suave)' }}>{u.email}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5em', flexShrink: 0 }}>
+                  <button type="button" className="btn-outline" onClick={() => empezarEdicion(u)}>
+                    Editar
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-danger"
+                    onClick={() => eliminarUsuario(u)}
+                    disabled={borrandoId === u.id || u.id === miPerfil.id}
+                    title={u.id === miPerfil.id ? 'No puedes eliminar tu propia cuenta' : 'Eliminar esta cuenta'}
+                  >
+                    {borrandoId === u.id ? 'Eliminando…' : 'Eliminar'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+        {usuarios.length === 0 && <p style={{ color: 'var(--tinta-suave)' }}>No hay integrantes registrados todavía.</p>}
+      </div>
     </div>
   );
 }
