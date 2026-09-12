@@ -39,7 +39,7 @@ export default function DetalleActa() {
     try {
       const nuevoParticipante = {
         uid: perfil.id,
-        nombre: perfil.nombre,
+        nombre: perfil.nombre || '',
         cargo: perfil.cargo || '',
         firmado: false,
         firmaURL: null,

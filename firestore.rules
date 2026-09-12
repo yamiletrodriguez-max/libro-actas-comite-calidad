@@ -18,8 +18,8 @@ service cloud.firestore {
     match /usuarios/{uid} {
       allow read: if estaAutenticado();
       allow update: if estaAutenticado() && (request.auth.uid == uid || esAdmin())
-                    // un usuario normal solo puede tocar su propia firma, nada más
-                    && (esAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['firmaURL']));
+                    // un usuario normal solo puede tocar su propia firma, nombre y cargo
+                    && (esAdmin() || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['firmaURL', 'nombre', 'cargo']));
       allow create, delete: if false; // solo mediante la función serverless con permisos de admin
     }
 

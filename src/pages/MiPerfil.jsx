@@ -1,10 +1,37 @@
 import React, { useState } from 'react';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import CapturaFirma from '../components/CapturaFirma.jsx';
 
 export default function MiPerfil() {
-  const { perfil, usuario, cambiarClave } = useAuth();
+  const { perfil, usuario, cambiarClave, recargarPerfil } = useAuth();
   const [editandoFirma, setEditandoFirma] = useState(false);
+
+  const [editandoDatos, setEditandoDatos] = useState(false);
+  const [nombre, setNombre] = useState(perfil.nombre || '');
+  const [cargo, setCargo] = useState(perfil.cargo || '');
+  const [guardandoDatos, setGuardandoDatos] = useState(false);
+  const [errorDatos, setErrorDatos] = useState('');
+
+  async function guardarDatos(e) {
+    e.preventDefault();
+    setErrorDatos('');
+    if (!nombre.trim()) {
+      setErrorDatos('El nombre no puede quedar vacío.');
+      return;
+    }
+    setGuardandoDatos(true);
+    try {
+      await updateDoc(doc(db, 'usuarios', perfil.id), { nombre: nombre.trim(), cargo: cargo.trim() });
+      await recargarPerfil();
+      setEditandoDatos(false);
+    } catch (err) {
+      setErrorDatos(`No se pudieron guardar los datos (${err.code || err.message || err}).`);
+    } finally {
+      setGuardandoDatos(false);
+    }
+  }
 
   const [claveActual, setClaveActual] = useState('');
   const [claveNueva, setClaveNueva] = useState('');
@@ -51,10 +78,41 @@ export default function MiPerfil() {
     <div>
       <h1>Mi perfil y configuración</h1>
       <div className="tarjeta" style={{ maxWidth: 480 }}>
-        <p><strong>Nombre:</strong> {perfil.nombre}</p>
-        <p><strong>Correo:</strong> {usuario?.email}</p>
-        <p><strong>Rol:</strong> {perfil.rol === 'admin' ? 'Administración' : 'Docente / integrante'}</p>
-        {perfil.cargo && <p><strong>Cargo:</strong> {perfil.cargo}</p>}
+        {!editandoDatos ? (
+          <>
+            <p><strong>Nombre:</strong> {perfil.nombre || <span style={{ color: 'var(--tinta-suave)' }}>(sin nombre guardado — complétalo)</span>}</p>
+            <p><strong>Correo:</strong> {usuario?.email}</p>
+            <p><strong>Rol:</strong> {perfil.rol === 'admin' ? 'Administración' : 'Docente / integrante'}</p>
+            {perfil.cargo && <p><strong>Cargo:</strong> {perfil.cargo}</p>}
+            <button className="btn-outline" onClick={() => setEditandoDatos(true)} style={{ marginTop: '0.5em' }}>
+              Editar mi nombre / cargo
+            </button>
+          </>
+        ) : (
+          <form onSubmit={guardarDatos}>
+            <div className="campo">
+              <label>Nombre completo</label>
+              <input value={nombre} onChange={(e) => setNombre(e.target.value)} required />
+            </div>
+            <div className="campo">
+              <label>Cargo (opcional)</label>
+              <input value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ej. Coordinadora académica" />
+            </div>
+            {errorDatos && <div className="mensaje-error">{errorDatos}</div>}
+            <div style={{ display: 'flex', gap: '0.6em' }}>
+              <button className="btn-primary" type="submit" disabled={guardandoDatos}>
+                {guardandoDatos ? 'Guardando…' : 'Guardar'}
+              </button>
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => { setEditandoDatos(false); setNombre(perfil.nombre || ''); setCargo(perfil.cargo || ''); }}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        )}
       </div>
 
       <div className="tarjeta" style={{ maxWidth: 480 }}>

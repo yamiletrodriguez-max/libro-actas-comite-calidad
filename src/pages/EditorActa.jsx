@@ -7,6 +7,21 @@ import SelectorParticipantes from '../components/SelectorParticipantes.jsx';
 import CapturaEvidencias from '../components/CapturaEvidencias.jsx';
 import { mejorarRedaccion } from '../utils/mejorarTexto.js';
 
+// Firestore rechaza cualquier campo con valor `undefined` (lanza el error
+// "invalid-argument"). Si el perfil de algún participante quedó incompleto
+// (por ejemplo, sin nombre guardado), esto evita que se rompa la publicación
+// completa del acta -- en cambio, guarda un texto vacío en ese campo.
+function sanearParticipantes(lista) {
+  return (lista || []).map((p) => ({
+    uid: p.uid || '',
+    nombre: p.nombre || '(nombre pendiente en el perfil)',
+    cargo: p.cargo || '',
+    firmado: !!p.firmado,
+    firmaURL: p.firmaURL || null,
+    fechaFirma: p.fechaFirma || null,
+  }));
+}
+
 export default function EditorActa() {
   const { id } = useParams();
   const navegar = useNavigate();
@@ -33,7 +48,7 @@ export default function EditorActa() {
       // y luego no le aparezca el área para firmar.
       if (perfil && perfil.rol === 'admin') {
         setParticipantes([
-          { uid: perfil.id, nombre: perfil.nombre, cargo: perfil.cargo || '', firmado: false, firmaURL: null, fechaFirma: null },
+          { uid: perfil.id, nombre: perfil.nombre || '', cargo: perfil.cargo || '', firmado: false, firmaURL: null, fechaFirma: null },
         ]);
       }
       return;
@@ -72,7 +87,15 @@ export default function EditorActa() {
     setError('');
     try {
       const datosActa = {
-        numero, titulo, fecha, lugar, agenda, desarrollo, acuerdos, participantes, evidencias,
+        numero: numero || '',
+        titulo: titulo || '',
+        fecha: fecha || '',
+        lugar: lugar || '',
+        agenda: agenda || '',
+        desarrollo: desarrollo || '',
+        acuerdos: acuerdos || '',
+        participantes: sanearParticipantes(participantes),
+        evidencias: evidencias || [],
         estado: 'borrador',
         actualizadoEn: serverTimestamp(),
       };
@@ -103,7 +126,15 @@ export default function EditorActa() {
     setError('');
     try {
       const datosActa = {
-        numero, titulo, fecha, lugar, agenda, desarrollo, acuerdos, participantes, evidencias,
+        numero: numero || '',
+        titulo: titulo || '',
+        fecha: fecha || '',
+        lugar: lugar || '',
+        agenda: agenda || '',
+        desarrollo: desarrollo || '',
+        acuerdos: acuerdos || '',
+        participantes: sanearParticipantes(participantes),
+        evidencias: evidencias || [],
         estado: 'pendiente_firmas',
         actualizadoEn: serverTimestamp(),
       };

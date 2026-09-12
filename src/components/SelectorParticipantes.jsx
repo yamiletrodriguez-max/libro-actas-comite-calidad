@@ -25,7 +25,7 @@ export default function SelectorParticipantes({ seleccionados, alCambiar }) {
     } else {
       alCambiar([
         ...seleccionados,
-        { uid: u.id, nombre: u.nombre, cargo: u.cargo || '', firmado: false, firmaURL: null, fechaFirma: null },
+        { uid: u.id, nombre: u.nombre || '', cargo: u.cargo || '', firmado: false, firmaURL: null, fechaFirma: null },
       ]);
     }
   }
