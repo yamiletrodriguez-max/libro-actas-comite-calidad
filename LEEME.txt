@@ -1,0 +1,71 @@
+LEEME — sobre este zip
+=======================
+
+Este zip contiene el código fuente de tu plataforma (Vite + React + Firebase +
+Netlify Functions), reconstruido a partir de los archivos que subiste, con el
+botón "Evidencias PRECE" ya agregado en src/components/Header.jsx.
+
+Estructura:
+
+  index.html
+  netlify.toml
+  firestore.rules
+  netlify/functions/
+    crear-usuario.js
+    actualizar-usuario.js
+    eliminar-usuario.js
+    mejorar-texto.js
+  src/
+    main.jsx
+    App.jsx
+    firebase.js
+    styles.css
+    context/AuthContext.jsx
+    components/
+      Header.jsx        <- aquí está el cambio del botón + modal
+      CapturaFirma.jsx
+      CapturaEvidencias.jsx
+      SelectorParticipantes.jsx
+    pages/
+      Login.jsx
+      PanelAdmin.jsx
+      PanelDocente.jsx
+      EditorActa.jsx
+      DetalleActa.jsx
+      MiPerfil.jsx
+    utils/
+      generarPDF.js
+      mejorarTexto.js
+
+IMPORTANTE
+----------
+El archivo que subiste venía comprimido "sin carpetas" (todo en un solo
+nivel), mezclado con miles de archivos de node_modules (dependencias) y del
+historial de git. A partir de eso pude reconstruir con confianza el código
+fuente propio de tu app (los archivos de arriba), porque sus nombres son
+únicos y sus imports entre sí confirman la estructura real de carpetas.
+
+Lo que NO incluyo porque no puedo garantizar que sea el original correcto:
+- package.json (el que venía en el zip solo tenía {"type":"module"}, muy
+  probablemente fue sobrescrito por el package.json de alguna dependencia
+  durante la compresión "plana").
+- package-lock.json / node_modules (no hace falta: se regeneran con
+  `npm install`).
+
+Qué hacer
+---------
+1. Ve a tu proyecto real (donde lo tienes en tu computadora o en GitHub).
+2. Reemplaza únicamente el archivo:
+     src/components/Header.jsx
+   por el que está en este zip (o copia solo el bloque nuevo si prefieres
+   mezclarlo a mano).
+3. No hace falta tocar nada más: los demás archivos van igual a como los
+   tenías, se incluyen solo como referencia/respaldo.
+4. Guarda, haz commit/push (o sube a Netlify) como haces normalmente.
+
+Sobre el modal
+---------------
+El botón "Evidencias PRECE" en el header abre un modal con la carpeta de
+Google Drive embebida (iframe) y un enlace "Abrir en Drive" de respaldo.
+Para que el iframe cargue sin error, la carpeta debe estar compartida como
+"Cualquier persona con el enlace puede ver".
